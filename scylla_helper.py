@@ -23,6 +23,7 @@ def get_scylla_host():
             text=True,
             timeout=10
         )
+        print(result)
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip()
     except (subprocess.TimeoutExpired, FileNotFoundError):

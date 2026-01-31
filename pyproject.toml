@@ -6,4 +6,5 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "cassandra-driver>=3.29.3",
+    "scylla-driver>=3.29.7",
 ]

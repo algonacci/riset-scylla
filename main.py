@@ -1,7 +1,7 @@
 from cassandra.cluster import Cluster
-from cassandra.auth import PlainTextAuthProvider
+from scylla_helper import get_scylla_host
 
-cluster = Cluster(["127.0.0.1"])
+cluster = Cluster([get_scylla_host()], port=9042, connect_timeout=30)
 session = cluster.connect()
 
 rows = session.execute("SELECT release_version FROM system.local")

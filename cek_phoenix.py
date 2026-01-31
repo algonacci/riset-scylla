@@ -1,18 +1,32 @@
+import os
+import argparse
 from cassandra.cluster import Cluster
+from scylla_helper import get_scylla_host
+
+# Parse arguments or use env var
+parser = argparse.ArgumentParser(description="Query ScyllaDB keyspace")
+parser.add_argument("--keyspace", "-k", default=os.getenv("SCYLLA_KEYSPACE", ""),
+                    help="Keyspace name (default: SCYLLA_KEYSPACE env or prompt)")
+args = parser.parse_args()
+
+keyspace = args.keyspace
+if not keyspace:
+    keyspace = input("Masukkan keyspace name: ").strip()
+
+if not keyspace:
+    print("Error: Keyspace required!")
+    exit(1)
 
 # Connect to ScyllaDB
-cluster = Cluster(["127.0.0.1"])
+cluster = Cluster([get_scylla_host()], port=9042, connect_timeout=30)
 session = cluster.connect()
 
-print("=== Checking Keyspace: chat_app ===")
+print(f"=== Checking Keyspace: {keyspace} ===")
 
 # Cek User Events (Join/Left)
 print("\n[User Events (Last 10)]")
 try:
-    # Note: CQL doesn't support generic LIMIT without partition key in some versions, 
-    # but for simple verification allowing filtering or just selecting simple works for small tables.
-    # Adding ALLOW FILTERING just in case, though ideally we verify partitions.
-    rows = session.execute("SELECT * FROM chat_app.user_events LIMIT 10")
+    rows = session.execute(f"SELECT * FROM {keyspace}.user_events LIMIT 10")
     count = 0
     for row in rows:
         count += 1
@@ -25,7 +39,7 @@ except Exception as e:
 # Cek Messages
 print("\n[Messages (Last 10)]")
 try:
-    rows = session.execute("SELECT * FROM chat_app.messages LIMIT 10")
+    rows = session.execute(f"SELECT * FROM {keyspace}.messages LIMIT 10")
     count = 0
     for row in rows:
         count += 1

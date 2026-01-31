@@ -1,7 +1,25 @@
+import os
+import argparse
 from cassandra.cluster import Cluster
+from scylla_helper import get_scylla_host
+
+# Parse arguments or use env var
+parser = argparse.ArgumentParser(description="Query ScyllaDB keyspace")
+parser.add_argument("--keyspace", "-k", default=os.getenv("SCYLLA_KEYSPACE", ""),
+                    help="Keyspace name (default: SCYLLA_KEYSPACE env or prompt)")
+args = parser.parse_args()
+
+keyspace = args.keyspace
+if not keyspace:
+    keyspace = input("Masukkan keyspace name: ").strip()
+
+if not keyspace:
+    print("Error: Keyspace required!")
+    exit(1)
 
 # Connect to ScyllaDB
-cluster = Cluster(["127.0.0.1"])
+cluster = Cluster([get_scylla_host()], port=9042, connect_timeout=30)
+
 session = cluster.connect()
 
 def print_table(title, query):
@@ -24,13 +42,9 @@ def print_table(title, query):
     except Exception as e:
         print(f"Error: {e}")
 
-# Keluarkan semua data dari activity_logs
-print_table("ENTERPRISE ACTIVITY LOGS (AUDIT TRAIL)", "SELECT * FROM chat_app.activity_logs ALLOW FILTERING")
-
-# Keluarkan semua data dari messages
-print_table("CHAT MESSAGES", "SELECT * FROM chat_app.messages")
-
-# Keluarkan semua data dari user_events
-print_table("USER EVENTS", "SELECT * FROM chat_app.user_events")
+# Query tables in the specified keyspace
+print_table("ENTERPRISE ACTIVITY LOGS (AUDIT TRAIL)", f"SELECT * FROM {keyspace}.activity_logs ALLOW FILTERING")
+print_table("CHAT MESSAGES", f"SELECT * FROM {keyspace}.messages")
+print_table("USER EVENTS", f"SELECT * FROM {keyspace}.user_events")
 
 cluster.shutdown()
